@@ -1,10 +1,11 @@
 <!--
 Informe de Impacto de Sincronización (Sync Impact Report)
-- Cambio de versión: (plantilla sin versión) → 1.0.0
-- Principios modificados: ninguno (adopción inicial; se reemplazan los 5 marcadores de la plantilla
-  por 13 principios definidos por el equipo).
-- Secciones añadidas: I–XIII (Principios Fundamentales), "Restricciones Tecnológicas y de
-  Despliegue", "Flujo de Desarrollo y Puertas de Calidad", "Gobernanza".
+- Cambio de versión: 1.0.0 → 1.0.1 (PATCH)
+- Principios modificados: III. Clasificación Obligatoria de Vulnerabilidades — se elimina la
+  severidad "Crítica"; quedan 4 niveles (Alta, Media, Baja, Informativa) alineados con OWASP ZAP.
+  Se clasifica como PATCH porque aún no existen especificaciones, planes ni código que dependan
+  de la lista anterior.
+- Secciones añadidas: ninguna.
 - Secciones eliminadas: ninguna.
 - Plantillas dependientes: no se modifican en este comando (leen la constitución en tiempo de
   ejecución).
@@ -42,8 +43,8 @@ desarrollada como trabajo de grado de la Universidad Manuela Beltrán (UMB).
 
 ### III. Clasificación Obligatoria de Vulnerabilidades
 
-- Toda vulnerabilidad registrada DEBE tener una severidad (Crítica, Alta, Media, Baja,
-  Informativa) y una categoría OWASP Top 10 asociada.
+- Toda vulnerabilidad registrada DEBE tener una severidad (Alta, Media, Baja, Informativa),
+  alineada con los niveles de riesgo de OWASP ZAP, y una categoría OWASP Top 10 asociada.
 - Un hallazgo sin severidad o sin mapeo OWASP es inválido y NO DEBE persistirse ni mostrarse
   como tal; si el origen no aporta mapeo, se asigna una categoría por regla documentada.
 
@@ -184,4 +185,4 @@ Stack obligatorio; cualquier sustitución requiere enmienda constitucional:
   estos principios; las desviaciones DEBEN justificarse por escrito en la sección de
   complejidad del plan o rechazarse.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-03
+**Version**: 1.0.1 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-08
