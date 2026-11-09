@@ -8,6 +8,15 @@
 
 **Entrada**: Descripción del usuario: "Prototipo demostrable de ÉGIDA (Escaneo, Gestión Inteligente y Detección de Amenazas). Objetivo: demostrar en menos de 5 minutos el flujo completo: un cliente registra un sitio web, lo escanea, ve las vulnerabilidades priorizadas por inteligencia artificial y recibe una alerta por correo de las críticas. [...] Fuera de alcance: registro de usuarios, verificación de propiedad, escaneos programados, umbrales configurables, reportes exportables, métricas de infraestructura, despliegue en la nube."
 
+## Clarificaciones
+
+### Sesión 2026-11-08
+
+- P: Si un escaneo termina con hallazgos de severidad Alta y la IA marca alguno como posible falso positivo, ¿se envía igual el correo? → R: Sí. Se alerta siempre por severidad Alta y en el correo los posibles falsos positivos aparecen marcados.
+- P: ¿Cuántos usuarios semilla se crean para la demo? → R: Dos: un Administrador y un Cliente.
+- P: ¿Qué escala usa la IA para la prioridad de cada hallazgo? → R: Etiquetas Alta / Media / Baja, mostradas siempre como "Prioridad IA" para no confundirlas con la severidad.
+- P: ¿El administrador solo consulta o también opera sobre activos de clientes? → R: Consulta todo y además puede lanzar escaneos sobre activos de cualquier cliente; la alerta va al cliente dueño del activo.
+
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
 ### Historia de usuario 1 - Inicio de sesión con roles (Prioridad: P1)
@@ -78,7 +87,7 @@ Para cada hallazgo, el cliente ve la prioridad que asignó el módulo de IA, si 
 1. **Dado** un escaneo terminado y el módulo de IA disponible, **cuando** el cliente ve los hallazgos, **entonces** cada uno muestra la prioridad asignada por la IA, si es posible falso positivo y una justificación breve.
 2. **Dado** el módulo de IA no disponible, **cuando** termina un escaneo, **entonces** los hallazgos se muestran con su severidad original y la indicación "análisis IA pendiente", y el escaneo igual se marca como terminado.
 3. **Dado** hallazgos marcados como "análisis IA pendiente", **cuando** el módulo de IA vuelve a estar disponible, **entonces** el sistema reintenta el análisis automáticamente y actualiza esos hallazgos.
-4. **Dado** la lista de hallazgos analizados, **cuando** el cliente la ordena por prioridad de IA, **entonces** los hallazgos más relevantes aparecen primero.
+4. **Dado** la lista de hallazgos analizados, **cuando** el cliente la ordena por Prioridad IA, **entonces** aparecen primero los de Prioridad IA Alta, luego Media y luego Baja; dentro de cada grupo se ordenan por severidad.
 
 ---
 
@@ -93,9 +102,10 @@ Cuando un escaneo termina con al menos un hallazgo de severidad Alta, el cliente
 **Escenarios de aceptación**:
 
 1. **Dado** un escaneo que termina con uno o más hallazgos de severidad Alta, **cuando** termina, **entonces** el cliente dueño del activo recibe un único correo de alerta con el resumen y el enlace al detalle.
-2. **Dado** un escaneo que termina sin hallazgos de severidad Alta, **cuando** termina, **entonces** no se envía correo de alerta.
-3. **Dado** que el envío del correo falla, **cuando** ocurre el error, **entonces** el sistema reintenta el envío, la alerta queda registrada y visible en la plataforma aunque el correo no haya salido, y el escaneo no se marca como fallido por ese motivo.
-4. **Dado** el enlace del correo, **cuando** el cliente lo abre, **entonces** llega al detalle del escaneo (iniciando sesión primero si no la tiene).
+2. **Dado** un escaneo cuyos hallazgos de severidad Alta fueron todos marcados por la IA como posible falso positivo, **cuando** termina, **entonces** el correo se envía igual y cada uno de esos hallazgos aparece marcado como "posible falso positivo".
+3. **Dado** un escaneo que termina sin hallazgos de severidad Alta, **cuando** termina, **entonces** no se envía correo de alerta.
+4. **Dado** que el envío del correo falla, **cuando** ocurre el error, **entonces** el sistema reintenta el envío, la alerta queda registrada y visible en la plataforma aunque el correo no haya salido, y el escaneo no se marca como fallido por ese motivo.
+5. **Dado** el enlace del correo, **cuando** el cliente lo abre, **entonces** llega al detalle del escaneo (iniciando sesión primero si no la tiene).
 
 ---
 
@@ -117,17 +127,18 @@ El usuario ve un panel con el total de activos, los escaneos recientes, los hall
 
 ### Historia de usuario 7 - Vista global del administrador (Prioridad: P3)
 
-El administrador ve los activos y escaneos de todos los clientes, con el cliente propietario identificado, y su dashboard resume los datos de toda la plataforma.
+El administrador ve los activos y escaneos de todos los clientes, con el cliente propietario identificado, y su dashboard resume los datos de toda la plataforma. También puede lanzar un escaneo sobre el activo de cualquier cliente.
 
 **Por qué esta prioridad**: muestra la separación de roles en la demo. El valor principal está en el flujo del cliente.
 
-**Prueba independiente**: después de que el cliente escanee un activo, iniciar sesión como administrador y verificar que ese activo y su escaneo aparecen con el cliente identificado.
+**Prueba independiente**: después de que el cliente escanee un activo, iniciar sesión como administrador y verificar que ese activo y su escaneo aparecen con el cliente identificado. Luego relanzar un escaneo desde el administrador y verificar que la alerta llega al cliente dueño.
 
 **Escenarios de aceptación**:
 
 1. **Dado** el administrador con sesión iniciada, **cuando** abre la lista de activos o de escaneos, **entonces** ve los de todos los clientes con el propietario de cada uno.
 2. **Dado** el administrador, **cuando** abre el detalle de un escaneo de cualquier cliente, **entonces** ve sus hallazgos y el análisis de IA.
-3. **Dado** un cliente, **cuando** intenta acceder directamente (por ejemplo, cambiando la dirección) a un activo o escaneo de otro cliente, **entonces** el acceso es denegado.
+3. **Dado** el administrador, **cuando** lanza un escaneo sobre el activo de un cliente, **entonces** el escaneo sigue el mismo flujo de estados, queda registrado como lanzado por el administrador en la bitácora de auditoría y, si hay hallazgos de severidad Alta, la alerta llega al cliente dueño del activo.
+4. **Dado** un cliente, **cuando** intenta acceder directamente (por ejemplo, cambiando la dirección) a un activo o escaneo que no le pertenece, **entonces** el acceso es denegado. Como en la demo solo hay un cliente, esto se verifica con pruebas automatizadas que crean un segundo cliente de prueba.
 
 ---
 
@@ -153,7 +164,7 @@ El administrador ve los activos y escaneos de todos los clientes, con el cliente
 - **FR-001**: El sistema DEBE permitir iniciar sesión con correo y contraseña a los dos usuarios precargados: uno con rol Administrador y otro con rol Cliente.
 - **FR-002**: El sistema DEBE denegar por defecto el acceso a cualquier dato o acción que no esté explícitamente permitido para el rol del usuario.
 - **FR-003**: Un Cliente DEBE ver y operar únicamente sobre sus propios activos, escaneos, hallazgos y alertas.
-- **FR-004**: Un Administrador DEBE poder consultar los activos, escaneos, hallazgos y alertas de todos los clientes.
+- **FR-004**: Un Administrador DEBE poder consultar los activos, escaneos, hallazgos y alertas de todos los clientes, y lanzar escaneos sobre activos de cualquier cliente. El Administrador no registra activos.
 - **FR-005**: El sistema DEBE mostrar un mensaje genérico ante credenciales incorrectas y bloquear temporalmente la cuenta tras 5 intentos fallidos consecutivos.
 - **FR-006**: El sistema DEBE permitir cerrar sesión, y las sesiones DEBEN expirar tras un periodo de inactividad.
 - **FR-007**: El sistema DEBE registrar en una bitácora de auditoría los inicios de sesión exitosos y fallidos, las operaciones administrativas y los accesos a resultados de escaneo (quién, qué y cuándo).
@@ -167,7 +178,7 @@ El administrador ve los activos y escaneos de todos los clientes, con el cliente
 
 **Escaneos**
 
-- **FR-012**: El Cliente DEBE poder lanzar un escaneo sobre uno de sus activos. La solicitud DEBE responder de inmediato, dejando el escaneo en estado "pendiente", sin esperar a que el escaneo termine.
+- **FR-012**: El Cliente DEBE poder lanzar un escaneo sobre uno de sus activos, y el Administrador sobre cualquier activo; el escaneo registra quién lo lanzó. La solicitud DEBE responder de inmediato, dejando el escaneo en estado "pendiente", sin esperar a que el escaneo termine.
 - **FR-013**: El sistema DEBE volver a verificar, al momento de ejecutar el escaneo, que el objetivo sigue en la lista autorizada, y DEBE impedir que el escaneo siga redirecciones hacia objetivos no autorizados.
 - **FR-014**: Cada escaneo DEBE pasar por los estados pendiente → en curso → terminado o fallido, con fecha de inicio y fin y, si falla, un motivo legible.
 - **FR-015**: El sistema DEBE impedir un segundo escaneo sobre un activo que ya tenga uno pendiente o en curso.
@@ -183,16 +194,16 @@ El administrador ve los activos y escaneos de todos los clientes, con el cliente
 
 **Análisis con IA**
 
-- **FR-022**: Al terminar un escaneo, el sistema DEBE enviar sus hallazgos al módulo de IA y guardar, para cada hallazgo, la prioridad asignada (escala de 1 a 5, donde 1 es la más urgente), la probabilidad de falso positivo (0–100 %) y una justificación breve.
+- **FR-022**: Al terminar un escaneo, el sistema DEBE enviar sus hallazgos al módulo de IA y guardar, para cada hallazgo, la Prioridad IA (Alta, Media o Baja), la probabilidad de falso positivo (0–100 %) y una justificación breve.
 - **FR-023**: El sistema DEBE marcar un hallazgo como "posible falso positivo" cuando la probabilidad asignada por la IA sea del 50 % o más.
 - **FR-024**: Si el módulo de IA no responde, responde con error o devuelve datos inválidos, el sistema DEBE conservar la severidad original, marcar el hallazgo como "análisis IA pendiente" y no bloquear el resto del flujo.
 - **FR-025**: El sistema DEBE reintentar automáticamente el análisis de los hallazgos pendientes cuando el módulo de IA vuelva a estar disponible.
-- **FR-026**: El análisis de IA NO DEBE modificar la severidad original del hallazgo. La prioridad de IA se muestra como un dato adicional.
+- **FR-026**: El análisis de IA NO DEBE modificar la severidad original del hallazgo. La Prioridad IA se muestra como un dato adicional, en una columna propia rotulada "Prioridad IA" y con un estilo visual distinto al de la severidad, para que no se confundan.
 
 **Alertas**
 
-- **FR-027**: Cuando un escaneo termina con al menos un hallazgo de severidad Alta, el sistema DEBE generar una alerta y enviar un único correo al cliente dueño del activo.
-- **FR-028**: El correo DEBE incluir el nombre del activo, la fecha del escaneo, el conteo de hallazgos por severidad, la lista de hallazgos de severidad Alta (con su prioridad de IA si existe) y un enlace al detalle del escaneo.
+- **FR-027**: Cuando un escaneo termina con al menos un hallazgo de severidad Alta, el sistema DEBE generar una alerta y enviar un único correo al cliente dueño del activo, sin importar quién lanzó el escaneo y aunque la IA haya marcado esos hallazgos como posibles falsos positivos.
+- **FR-028**: El correo DEBE incluir el nombre del activo, la fecha del escaneo, el conteo de hallazgos por severidad, la lista de hallazgos de severidad Alta (con su Prioridad IA y la marca "posible falso positivo" cuando aplique, o "análisis IA pendiente") y un enlace al detalle del escaneo.
 - **FR-029**: Si el envío del correo falla, el sistema DEBE reintentarlo (hasta 3 veces) y la alerta DEBE quedar visible en la plataforma con su estado de envío.
 - **FR-030**: El usuario DEBE poder ver en la plataforma la lista de sus alertas.
 
@@ -210,8 +221,8 @@ El administrador ve los activos y escaneos de todos los clientes, con el cliente
 
 - **Usuario**: persona que accede a la plataforma. Atributos: nombre, correo, credencial protegida, rol (Administrador o Cliente), estado de bloqueo.
 - **Activo**: sitio web registrado por un Cliente para monitorear. Atributos: nombre, URL, propietario (Cliente), fecha de registro. Un Cliente tiene muchos Activos.
-- **Escaneo**: ejecución de un análisis sobre un Activo. Atributos: activo, estado (pendiente, en curso, terminado, fallido), fecha de solicitud, inicio y fin, motivo de fallo. Un Activo tiene muchos Escaneos.
-- **Hallazgo**: vulnerabilidad detectada en un Escaneo. Atributos: nombre, descripción, severidad, categoría OWASP Top 10, URL afectada, recomendación, y resultado de IA (prioridad, probabilidad de falso positivo, justificación, estado del análisis: analizado o pendiente). Un Escaneo tiene muchos Hallazgos.
+- **Escaneo**: ejecución de un análisis sobre un Activo. Atributos: activo, lanzado por (Usuario), estado (pendiente, en curso, terminado, fallido), fecha de solicitud, inicio y fin, motivo de fallo. Un Activo tiene muchos Escaneos.
+- **Hallazgo**: vulnerabilidad detectada en un Escaneo. Atributos: nombre, descripción, severidad, categoría OWASP Top 10, URL afectada, recomendación, y resultado de IA (Prioridad IA: Alta/Media/Baja, probabilidad de falso positivo, justificación, estado del análisis: analizado o pendiente). Un Escaneo tiene muchos Hallazgos.
 - **Alerta**: aviso generado cuando un Escaneo termina con hallazgos de severidad Alta. Atributos: escaneo, destinatario, fecha, resumen, estado de envío del correo (pendiente, enviado, fallido) e intentos.
 - **Registro de auditoría**: evento de seguridad. Atributos: usuario (si aplica), acción, recurso, resultado, fecha y hora, origen.
 
@@ -235,7 +246,8 @@ El administrador ve los activos y escaneos de todos los clientes, con el cliente
 - El objetivo de pruebas es una aplicación web deliberadamente vulnerable que corre en el mismo entorno aislado. Reemplaza a la réplica institucional prevista en la tesis, que queda para una fase posterior.
 - La lista de objetivos autorizados la define quien despliega el sistema (configuración), no los usuarios desde la interfaz.
 - La bandeja de correo de la demostración es un servidor de pruebas que captura los correos sin enviarlos a Internet.
-- El Administrador consulta pero no registra activos ni lanza escaneos en nombre de clientes en este prototipo.
+- Hay dos usuarios semilla: un Administrador y un Cliente. El aislamiento entre clientes (SC-008) se comprueba con pruebas automatizadas que crean clientes de prueba adicionales, no en la demo en vivo.
+- El Administrador consulta todo y puede lanzar escaneos sobre activos de cualquier cliente, pero no registra activos.
 - No se edita ni elimina un activo en el prototipo; basta con registrarlo y consultarlo.
 - El modelo de IA inicial se entrena con un conjunto pequeño de hallazgos sintéticos etiquetados. Medir la reducción de falsos positivos (>30 %) queda para una fase posterior, cuando se defina el dataset con el director.
 - La interfaz es web para escritorio; el soporte móvil no es requisito del prototipo.

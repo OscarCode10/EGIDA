@@ -33,4 +33,4 @@
 
 - Validación completada en la primera iteración.
 - Se evitaron a propósito nombres de herramientas (escáner, bandeja de correo, framework de IA). Se mencionan solo por su función ("escáner", "módulo de IA", "bandeja de correo de pruebas"); las herramientas concretas se definen en `/speckit-plan`.
-- Valores por defecto elegidos sin consultar (pueden revisarse en `/speckit-clarify`): bloqueo tras 5 intentos fallidos durante 15 min, tiempo máximo de escaneo de 15 min, prioridad de IA de 1 a 5, umbral de falso positivo ≥ 50 %, 3 reintentos de correo, 5 elementos recientes en el dashboard.
+- Valores por defecto elegidos sin consultar (pueden revisarse en `/speckit-clarify`): bloqueo tras 5 intentos fallidos durante 15 min, tiempo máximo de escaneo de 15 min, umbral de falso positivo ≥ 50 %, 3 reintentos de correo, 5 elementos recientes en el dashboard.
