@@ -16,6 +16,7 @@
 - P: ¿Cuántos usuarios semilla se crean para la demo? → R: Dos: un Administrador y un Cliente.
 - P: ¿Qué escala usa la IA para la prioridad de cada hallazgo? → R: Etiquetas Alta / Media / Baja, mostradas siempre como "Prioridad IA" para no confundirlas con la severidad.
 - P: ¿El administrador solo consulta o también opera sobre activos de clientes? → R: Consulta todo y además puede lanzar escaneos sobre activos de cualquier cliente; la alerta va al cliente dueño del activo.
+- Nota de planificación (2026-11-08): FR-018 pasa de "solo pasivo" a "perfil demo acotado con pruebas activas limitadas". Un escaneo solo pasivo no produce hallazgos de severidad Alta en el sitio de pruebas, y sin ellos la historia 5 no se puede demostrar. Ver [research.md](./research.md) R1.
 
 ## Escenarios de usuario y pruebas *(obligatorio)*
 
@@ -184,7 +185,7 @@ El administrador ve los activos y escaneos de todos los clientes, con el cliente
 - **FR-015**: El sistema DEBE impedir un segundo escaneo sobre un activo que ya tenga uno pendiente o en curso.
 - **FR-016**: El sistema DEBE aplicar un tiempo máximo por escaneo (15 minutos por defecto) y marcarlo como fallido si lo excede.
 - **FR-017**: El sistema DEBE notificar los cambios de estado de un escaneo a la pantalla del usuario sin que este tenga que recargarla.
-- **FR-018**: El escaneo DEBE ser de tipo pasivo/básico (rastreo del sitio y análisis de las respuestas), adecuado para una demostración rápida y sin ataques activos.
+- **FR-018**: El escaneo DEBE usar un perfil de demostración acotado: rastreo del sitio, análisis pasivo de las respuestas y un conjunto reducido de pruebas activas (p. ej., inyección y XSS) con duración limitada. Las pruebas activas solo se permiten porque el objetivo pertenece al entorno de pruebas aislado y autorizado.
 
 **Hallazgos**
 
