@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Egida.Api/Egida.Api.csproj" />
+    <Project Path="src/Egida.Application/Egida.Application.csproj" />
+    <Project Path="src/Egida.Domain/Egida.Domain.csproj" />
+    <Project Path="src/Egida.Infrastructure/Egida.Infrastructure.csproj" />
+    <Project Path="src/Egida.Worker/Egida.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Egida.Api.Tests/Egida.Api.Tests.csproj" />
+    <Project Path="tests/Egida.Application.Tests/Egida.Application.Tests.csproj" />
+    <Project Path="tests/Egida.Domain.Tests/Egida.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

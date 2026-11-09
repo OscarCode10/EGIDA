@@ -1,0 +1,148 @@
+# ÉGIDA — prototipo demostrable. Un solo comando: docker compose up -d --build
+# Redes (research R12):
+#   red-objetivos: internal, sin salida a Internet. Solo juice-shop y zap.
+#   red-app: resto de servicios.
+
+name: egida
+
+x-objetivos: &objetivos
+  # Lista blanca de objetivos autorizados (principio XII). Solo la define quien despliega.
+  Egida__Escaneo__Objetivos__0__Url: http://juice-shop:3000
+  Egida__Escaneo__Objetivos__0__Nombre: OWASP Juice Shop (pruebas)
+  Egida__Escaneo__Objetivos__0__UrlsSemilla__0: /rest/products/search?q=manzana
+  Egida__Escaneo__Objetivos__0__UrlsSemilla__1: /ftp
+  Egida__Escaneo__Objetivos__0__UrlsSemilla__2: /api/Products
+  Egida__Escaneo__Objetivos__0__UrlsSemilla__3: /rest/user/login
+  Egida__Escaneo__Objetivos__0__UrlsSemilla__4: /api/Feedbacks
+
+x-bd: &bd
+  ConnectionStrings__Egida: Host=postgres;Port=5432;Database=${POSTGRES_DB:-egida};Username=${POSTGRES_USER:-egida};Password=${POSTGRES_PASSWORD}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-egida}
+      POSTGRES_USER: ${POSTGRES_USER:-egida}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+    networks: [red-app]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-egida} -d ${POSTGRES_DB:-egida}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  zap:
+    image: zaproxy/zap-stable
+    command: >
+      zap.sh -daemon -host 0.0.0.0 -port 8080
+      -config api.key=${ZAP_API_KEY}
+      -config api.addrs.addr.name=.*
+      -config api.addrs.addr.regex=true
+      -config connection.timeoutInSecs=20
+    environment:
+      JAVA_OPTS: -Xmx1g
+    mem_limit: 1536m
+    networks: [red-app, red-objetivos]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs \"http://localhost:8080/JSON/core/view/version/?apikey=${ZAP_API_KEY}\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  juice-shop:
+    image: bkimminich/juice-shop
+    networks: [red-objetivos]
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
+    networks: [red-app]
+    restart: unless-stopped
+
+  egida-ia:
+    build: ./egida-ia
+    networks: [red-app]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/salud').status==200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Egida.Api/Dockerfile
+    environment:
+      <<: [*objetivos, *bd]
+      ASPNETCORE_ENVIRONMENT: Development
+      Jwt__Clave: ${JWT_CLAVE}
+      Semilla__AdminContrasena: ${SEMILLA_ADMIN_CONTRASENA}
+      Semilla__ClienteContrasena: ${SEMILLA_CLIENTE_CONTRASENA}
+      Semilla__AdminCorreo: ${SEMILLA_ADMIN_CORREO:-}
+      Semilla__ClienteCorreo: ${SEMILLA_CLIENTE_CORREO:-}
+    ports:
+      - "5080:8080"
+    networks: [red-app]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/salud || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/Egida.Worker/Dockerfile
+    environment:
+      <<: [*objetivos, *bd]
+      Zap__Url: http://zap:8080
+      Zap__ClaveApi: ${ZAP_API_KEY}
+      IA__Url: http://egida-ia:8000
+      Correo__Host: ${SMTP_HOST:-mailpit}
+      Correo__Puerto: ${SMTP_PUERTO:-1025}
+      Correo__Seguridad: ${SMTP_SEGURIDAD:-Ninguna}
+      Correo__Usuario: ${SMTP_USUARIO:-}
+      Correo__Contrasena: ${SMTP_CONTRASENA:-}
+      Correo__Remitente: ${SMTP_REMITENTE:-}
+      Egida__UrlPublica: ${EGIDA_URL_PUBLICA:-http://localhost:5173}
+    networks: [red-app]
+    depends_on:
+      api:
+        condition: service_healthy
+      zap:
+        condition: service_healthy
+      egida-ia:
+        condition: service_started
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+
+  web:
+    build: ./egida-web
+    ports:
+      - "5173:80"
+    networks: [red-app]
+    depends_on:
+      - api
+    restart: unless-stopped
+
+networks:
+  red-app: {}
+  red-objetivos:
+    internal: true
+
+volumes:
+  datos-postgres: {}

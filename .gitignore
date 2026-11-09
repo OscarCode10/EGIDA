@@ -1,0 +1,36 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+TestResults/
+packages/
+
+# Secretos (principio XI)
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+build/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+egida-ia/modelos/*.joblib
+
+# Editores / SO
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp

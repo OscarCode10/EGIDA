@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/.venv/
+**/__pycache__/
+**/TestResults/
+.git/
+.vs/
+.env
+.env.*
+*.log
+specs/
+.specify/
+.claude/
