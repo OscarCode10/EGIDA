@@ -47,10 +47,10 @@ description: "Lista de tareas del prototipo demostrable de ÉGIDA"
 - [ ] T004 Crear los proyectos xUnit `tests/Egida.Domain.Tests` (→Domain), `tests/Egida.Application.Tests` (→Application), `tests/Egida.Api.Tests` (→Api, con `Microsoft.AspNetCore.Mvc.Testing` y `Testcontainers.PostgreSql`) y agregarlos a `Egida.slnx`
 - [ ] T005 Agregar paquetes NuGet: `Npgsql.EntityFrameworkCore.PostgreSQL` 10.x, `EFCore.NamingConventions`, `Microsoft.Extensions.Identity.Core`, `Microsoft.Extensions.Http.Resilience`, `MailKit` en `src/Egida.Infrastructure/Egida.Infrastructure.csproj`; `Microsoft.AspNetCore.Authentication.JwtBearer` y `Microsoft.AspNetCore.OpenApi` en `src/Egida.Api/Egida.Api.csproj`; `Microsoft.EntityFrameworkCore.Design` en `src/Egida.Api/Egida.Api.csproj`
 - [ ] T006 [P] Crear `.env.example` con valores ficticios: `POSTGRES_DB=egida`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `JWT_CLAVE` (≥ 32 bytes), `ZAP_API_KEY`, `SEMILLA_ADMIN_CONTRASENA`, `SEMILLA_CLIENTE_CONTRASENA`, `EGIDA_URL_PUBLICA=http://localhost:5173`
-- [ ] T007 Crear `docker-compose.yml` con los servicios de infraestructura: `postgres` (postgres:17-alpine, volumen `datos-postgres`, healthcheck `pg_isready`, red-app), `zap` (zaproxy/zap-stable en daemon, `-Xmx1g`, `mem_limit: 1536m`, `api.key=${ZAP_API_KEY}`, `api.addrs.addr.regex=true`, redes red-app y red-objetivos, healthcheck a `/JSON/core/view/version/`), `juice-shop` (bkimminich/juice-shop, solo red-objetivos, sin puertos), `mailpit` (axllent/mailpit, red-app, puerto 8025); red `red-objetivos` con `internal: true` (R12)
+- [ ] T007 Crear `docker-compose.yml` con los servicios de infraestructura: `postgres` (postgres:17-alpine, volumen `datos-postgres`, healthcheck `pg_isready`, red-app), `zap` (zaproxy/zap-stable en daemon, `-Xmx1g`, `mem_limit: 1536m`, `api.key=${ZAP_API_KEY}`, `api.addrs.addr.regex=true`, redes red-app y red-objetivos, healthcheck a `/JSON/core/view/version/`), `juice-shop` (bkimminich/juice-shop, solo red-objetivos, sin puertos); red `red-objetivos` con `internal: true` (R12)
 - [ ] T008 [P] Crear `.github/workflows/ci.yml` con job .NET: `actions/setup-dotnet` 10.x, `dotnet restore`, `dotnet build Egida.slnx -c Release`, `dotnet test Egida.slnx -c Release` (los jobs de Python y web se agregan en T093 y T108)
 - [ ] T009 [P] Crear `README.md` en la raíz con descripción breve de ÉGIDA y enlace a `specs/001-prototipo-demostrable/quickstart.md`
-- [ ] T010 Verificar: `dotnet build Egida.slnx` sin errores y `docker compose up -d postgres zap juice-shop mailpit` deja los 4 servicios sanos (`docker compose ps`)
+- [ ] T010 Verificar: `dotnet build Egida.slnx` sin errores y `docker compose up -d postgres zap juice-shop` deja los 3 servicios sanos (`docker compose ps`)
 
 **Checkpoint**: solución compila, infraestructura arriba, CI en verde.
 
@@ -239,7 +239,7 @@ description: "Lista de tareas del prototipo demostrable de ÉGIDA"
 
 **Objetivo**: un único correo al cliente dueño del activo cuando el escaneo termina con ≥ 1 hallazgo Alto, con reintentos y estado visible.
 
-**Prueba independiente**: escanear Juice Shop y ver en Mailpit (`http://localhost:8025`) el correo con resumen, FP marcados y enlace funcional; escaneo sin Altos → sin correo.
+**Prueba independiente**: escanear Juice Shop y ver en la bandeja real del cliente el correo con resumen, FP marcados y enlace funcional; escaneo sin Altos → sin correo.
 
 ### Pruebas de la US5 ⚠️
 
@@ -257,11 +257,11 @@ description: "Lista de tareas del prototipo demostrable de ÉGIDA"
 - [ ] T123 [US5] Crear plantillas HTML + texto en español en `src/Egida.Infrastructure/Correo/Plantillas/AlertaEscaneo.html` y `AlertaEscaneo.txt` (recursos incrustados) y `ConstructorCorreoAlerta` en `src/Egida.Application/Alertas/ConstructorCorreoAlerta.cs` (lee el estado IA actual de cada Alta al momento del envío)
 - [ ] T124 [US5] Implementar `EnviadorCorreoMailKit` (SMTP `Correo:Host`/`Puerto`, remitente `alertas@egida.test`) en `src/Egida.Infrastructure/Correo/EnviadorCorreoMailKit.cs`
 - [ ] T125 [US5] Implementar caso de uso `EnviarAlerta` en `src/Egida.Application/Alertas/EnviarAlerta.cs` y `EnviadorAlertas` (BackgroundService que procesa alertas Pendiente con `ProximoIntentoEn <= ahora`; publica `AlertaEnvioActualizado`) en `src/Egida.Worker/EnviadorAlertas.cs`
-- [ ] T126 [US5] Agregar al `worker` en `docker-compose.yml`: `Correo__Host=mailpit`, `Correo__Puerto=1025`, `Egida__UrlPublica=${EGIDA_URL_PUBLICA}`
+- [ ] T126 [US5] Agregar al `worker` en `docker-compose.yml`: `Correo__Host=${SMTP_HOST}`, `Correo__Puerto=${SMTP_PUERTO}`, credenciales `SMTP_USUARIO`/`SMTP_CONTRASENA` obligatorias, `Egida__UrlPublica=${EGIDA_URL_PUBLICA}`
 - [ ] T127 [US5] Implementar `ListarAlertas` en `src/Egida.Application/Alertas/ListarAlertas.cs`, endpoint `GET /api/alertas` en `src/Egida.Api/Endpoints/EndpointsAlertas.cs`, y `alerta { id, estadoEnvio }` en `GET /api/escaneos/{id}`
 - [ ] T128 [US5] Crear página `egida-web/src/paginas/Alertas.tsx` (lista con activo, fecha, total Altas, posibles FP, estado de envío y enlace al escaneo)
 
-**Checkpoint**: US5 funciona; correo visible en Mailpit en < 1 min (SC-004).
+**Checkpoint**: US5 funciona; correo en la bandeja real en < 1 min (SC-004).
 
 ---
 

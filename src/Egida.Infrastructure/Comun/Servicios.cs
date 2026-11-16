@@ -129,11 +129,11 @@ public sealed class ColaEscaneosPostgres(NpgsqlDataSource fuente) : IColaEscaneo
 public sealed class OpcionesCorreo
 {
     public const string Seccion = "Correo";
-    public string Host { get; set; } = "localhost";
-    public int Puerto { get; set; } = 1025;
-    /// <summary>Ninguna (Mailpit), StartTls (Gmail, puerto 587) o SslTls (puerto 465).</summary>
-    public string Seguridad { get; set; } = "Ninguna";
-    /// <summary>Usuario SMTP; si está vacío no se autentica (Mailpit).</summary>
+    public string Host { get; set; } = "smtp.gmail.com";
+    public int Puerto { get; set; } = 587;
+    /// <summary>StartTls (Gmail, puerto 587), SslTls (puerto 465) o Ninguna.</summary>
+    public string Seguridad { get; set; } = "StartTls";
+    /// <summary>Usuario SMTP de la cuenta real que envía las alertas.</summary>
     public string? Usuario { get; set; }
     /// <summary>Contraseña SMTP (en Gmail, una contraseña de aplicación). Solo desde variables de entorno.</summary>
     public string? Contrasena { get; set; }
@@ -154,7 +154,7 @@ public sealed class OpcionesCorreo
         : "alertas@egida.test";
 }
 
-/// <summary>SMTP estándar con MailKit (principio IX): Mailpit en pruebas o un SMTP real (p. ej. Gmail).</summary>
+/// <summary>SMTP estándar con MailKit (principio IX): contra un servidor SMTP real (p. ej. Gmail).</summary>
 public sealed class EnviadorCorreoMailKit(IOptions<OpcionesCorreo> opciones) : IEnviadorCorreo
 {
     public async Task EnviarAsync(MensajeCorreo mensaje, CancellationToken ct)

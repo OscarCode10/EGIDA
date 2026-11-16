@@ -103,7 +103,7 @@ Cada decisión sigue el formato: Decisión / Justificación / Alternativas consi
 
 ## R10. Correo de alerta
 
-- **Decisión**: el Worker crea la `Alerta` (una por escaneo, índice único `escaneo_id`) dentro de la misma transacción que marca el escaneo como `Terminado`. Luego `EnviadorAlertas` (BackgroundService) la envía con **MailKit** por SMTP a **Mailpit** (`axllent/mailpit`, SMTP 1025, UI 8025). Hasta 3 intentos (backoff de 10 s, 30 s, 90 s) y estado `Pendiente → Enviado | Fallido`. Plantilla HTML + texto en español, con enlace `{EGIDA_URL_PUBLICA}/escaneos/{id}`.
+- **Decisión**: el Worker crea la `Alerta` (una por escaneo, índice único `escaneo_id`) dentro de la misma transacción que marca el escaneo como `Terminado`. Luego `EnviadorAlertas` (BackgroundService) la envía con **MailKit** por SMTP a un **servidor real** (Gmail, `smtp.gmail.com:587` con StartTls y contraseña de aplicación). Se descartó Mailpit: las alertas deben llegar a una bandeja real. Hasta 3 intentos (backoff de 10 s, 30 s, 90 s) y estado `Pendiente → Enviado | Fallido`. Plantilla HTML + texto en español, con enlace `{EGIDA_URL_PUBLICA}/escaneos/{id}`.
 - **Justificación**: patrón *outbox*. El correo nunca se pierde ni bloquea el escaneo (FR-029), y SMTP estándar mantiene la portabilidad (principio IX).
 - **Alternativas**: enviar en línea al terminar el escaneo (si falla el SMTP se pierde la alerta); SendGrid/Azure Communication Services (SDK propietario; viola IX).
 
@@ -116,9 +116,9 @@ Cada decisión sigue el formato: Decisión / Justificación / Alternativas consi
 
 - **Decisión**: dos redes:
   - `red-objetivos` (`internal: true`, sin salida a Internet): `juice-shop` y `zap`.
-  - `red-app`: `postgres`, `api`, `worker`, `egida-ia`, `mailpit`, `web` y `zap`.
+  - `red-app`: `postgres`, `api`, `worker`, `egida-ia`, `web` y `zap`.
 
-  Juice Shop no publica puertos al host. Solo se publican `web` (5173), `api` (5080, para Swagger en desarrollo) y `mailpit` (8025). La lista blanca, por variable de entorno, queda como `EGIDA__Escaneo__Objetivos__0__Url=http://juice-shop:3000` más sus URLs semilla.
+  Juice Shop no publica puertos al host. Solo se publican `web` (5173), `api` (5080, para Swagger en desarrollo). La lista blanca, por variable de entorno, queda como `EGIDA__Escaneo__Objetivos__0__Url=http://juice-shop:3000` más sus URLs semilla.
 - **Justificación**: cumple el principio XII y la restricción de la especificación (solo el entorno aislado). Aunque la API de ÉGIDA fallara en validar, ZAP no alcanza objetivos externos a través de `red-objetivos`. ZAP sí está en `red-app` para recibir órdenes; el contexto de alcance de R2 cubre ese lado.
 
 ## R13. Pruebas y CI

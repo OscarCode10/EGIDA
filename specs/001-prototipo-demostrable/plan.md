@@ -12,7 +12,7 @@ Prototipo de punta a punta, en menos de 5 minutos:
 2. Lanza un escaneo que el Worker ejecuta con OWASP ZAP (perfil "demo": baseline + escaneo activo acotado).
 3. Los resultados se normalizan a 4 severidades y a OWASP Top 10:2025.
 4. Se analizan con un microservicio de IA (RandomForest) que asigna Prioridad IA y probabilidad de falso positivo.
-5. Si hay hallazgos Altos, se envía un correo (Mailpit) y el dashboard se actualiza en tiempo real (SignalR alimentado por `LISTEN/NOTIFY` de PostgreSQL).
+5. Si hay hallazgos Altos, se envía un correo real por SMTP (Gmail) y el dashboard se actualiza en tiempo real (SignalR alimentado por `LISTEN/NOTIFY` de PostgreSQL).
 
 Todo se levanta con `docker compose up`.
 
@@ -26,7 +26,7 @@ Todo se levanta con `docker compose up`.
 - *Backend*: ASP.NET Core 10, EF Core 10 + Npgsql, SignalR, `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.Extensions.Identity.Core` (solo `PasswordHasher`), `Microsoft.Extensions.Http.Resilience`, MailKit.
 - *IA*: FastAPI, Uvicorn, scikit-learn, pandas, joblib.
 - *Frontend*: Vite, react-router, TanStack Query, `@microsoft/signalr`.
-- *Contenedores*: `postgres:17-alpine`, `zaproxy/zap-stable`, `bkimminich/juice-shop`, `axllent/mailpit`, nginx.
+- *Contenedores*: `postgres:17-alpine`, `zaproxy/zap-stable`, `bkimminich/juice-shop`, nginx. El correo sale por un SMTP real (Gmail).
 
 **Almacenamiento**: PostgreSQL 17 (una base `egida`; la IA no tiene base propia)
 
@@ -166,7 +166,6 @@ egida-web/
 | `egida-ia` | build `egida-ia` | red-app | — | healthcheck `/salud` |
 | `zap` | zaproxy/zap-stable | red-app, red-objetivos | — | daemon, `-Xmx1g`, `mem_limit: 1536m`, clave API |
 | `juice-shop` | bkimminich/juice-shop | red-objetivos (internal) | — | objetivo aislado |
-| `mailpit` | axllent/mailpit | red-app | 8025 | bandeja web de la demo |
 | `web` | build `egida-web` | red-app | 5173 | nginx + proxy a la API |
 
 ## Fases de implementación (guía para `/speckit-tasks` y `/speckit-implement`)
@@ -175,7 +174,7 @@ Al cerrar cada fase: pruebas en verde, commit, push. No se avanza si algo falla.
 
 | Fase | Contenido | Criterio de salida |
 |---|---|---|
-| **A** | `docker-compose.yml` (postgres, zap, juice-shop, mailpit), `.env.example`, `Egida.slnx` con los 5 proyectos + 3 de pruebas vacíos, `ci.yml` básico | `dotnet build` OK; `docker compose up` deja sanos los 4 servicios de infraestructura; CI en verde |
+| **A** | `docker-compose.yml` (postgres, zap, juice-shop), `.env.example`, `Egida.slnx` con los 5 proyectos + 3 de pruebas vacíos, `ci.yml` básico | `dotnet build` OK; `docker compose up` deja sanos los 3 servicios de infraestructura; CI en verde |
 | **B** | `Usuario`, `RegistroAuditoria`, DbContext + migración inicial, semilla, login JWT, bloqueo, `/api/auth/*`, fallback policy | Pruebas de integración de login, bloqueo y 401 en verde |
 | **C** | `Activo`, `Escaneo`, `Hallazgo`; lista blanca; cola; `ClienteZap`; normalizador + mapeo OWASP; endpoints de activos y escaneos | **Validación R1**: escaneo real de Juice Shop < 3 min con ≥ 1 hallazgo Alto; pruebas de mapeo, 409 y lista blanca en verde |
 | **D** | `egida-ia` completo (dataset, entrenamiento, `/analizar`, `/salud`, pytest) + `ClienteIA` + reintentador | Hallazgos con Prioridad IA; escenario de IA caída del quickstart OK |

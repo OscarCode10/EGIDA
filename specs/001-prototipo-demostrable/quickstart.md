@@ -6,7 +6,8 @@ Escenarios ejecutables que prueban el flujo de punta a punta. Contratos: [api-re
 
 - Windows 11 con Docker Desktop (WSL 2) en marcha y al menos 6 GB de RAM asignados a Docker.
 - .NET SDK 10, Node 20+ (se recomienda 22 LTS), uv. Solo hacen falta para correr pruebas fuera de Docker.
-- Puertos libres: 5173 (web), 5080 (API), 8025 (Mailpit).
+- Puertos libres: 5173 (web) y 5080 (API).
+- Una cuenta de correo real para enviar alertas (Gmail con contraseña de aplicación) y correos reales para los usuarios semilla.
 
 ## Levantar el sistema
 
@@ -16,7 +17,7 @@ Ejecutar en PowerShell desde la raíz del repo, un comando a la vez:
 Copy-Item .env.example .env
 ```
 
-Editar `.env` y poner valores propios en `JWT_CLAVE`, `POSTGRES_PASSWORD`, `ZAP_API_KEY`, `SEMILLA_ADMIN_CONTRASENA` y `SEMILLA_CLIENTE_CONTRASENA` (siempre ficticios, nunca datos reales).
+Editar `.env` y poner valores propios en `JWT_CLAVE`, `POSTGRES_PASSWORD`, `ZAP_API_KEY`, `SEMILLA_ADMIN_CONTRASENA` y `SEMILLA_CLIENTE_CONTRASENA` (siempre ficticios). Para el correo real, rellenar `SMTP_USUARIO`, `SMTP_CONTRASENA` (contraseña de aplicación), `SEMILLA_ADMIN_CORREO` y `SEMILLA_CLIENTE_CORREO`. Sin `SMTP_USUARIO` o `SMTP_CONTRASENA`, `docker compose` no arranca.
 
 ```powershell
 docker compose up -d --build
@@ -42,7 +43,7 @@ docker compose ps
 | 8 | Esperar (< 3 min) | Estado "Terminado" sin recargar | SC-002, SC-005 |
 | 9 | Abrir el detalle | Hallazgos con severidad, OWASP, URL, recomendación y columna "Prioridad IA" | HU3, HU4, SC-003 |
 | 10 | Ordenar por Prioridad IA | Primero Alta, luego Media, luego Baja | HU4-4 |
-| 11 | Abrir `http://localhost:8025` (Mailpit) | Un correo "ÉGIDA – Alerta: N hallazgos de severidad Alta en Juice Shop", con los posibles FP marcados | HU5-1/2, SC-004 |
+| 11 | Abrir la bandeja del correo del cliente | Un correo "ÉGIDA – Alerta: N hallazgos de severidad Alta en Juice Shop", con los posibles FP marcados | HU5-1/2, SC-004 |
 | 12 | Clic en el enlace del correo | Abre el detalle del escaneo | HU5-5 |
 | 13 | Volver al dashboard | Activos = 1, escaneo reciente, conteos por severidad, alerta reciente | HU6-1/2 |
 | 14 | Cerrar sesión y entrar como `admin@egida.test` | Vista global con el activo del cliente y su propietario | HU7-1/2 |

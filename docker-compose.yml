@@ -60,13 +60,6 @@ services:
     networks: [red-objetivos]
     restart: unless-stopped
 
-  mailpit:
-    image: axllent/mailpit
-    ports:
-      - "8025:8025"
-    networks: [red-app]
-    restart: unless-stopped
-
   egida-ia:
     build: ./egida-ia
     networks: [red-app]
@@ -111,11 +104,12 @@ services:
       Zap__Url: http://zap:8080
       Zap__ClaveApi: ${ZAP_API_KEY}
       IA__Url: http://egida-ia:8000
-      Correo__Host: ${SMTP_HOST:-mailpit}
-      Correo__Puerto: ${SMTP_PUERTO:-1025}
-      Correo__Seguridad: ${SMTP_SEGURIDAD:-Ninguna}
-      Correo__Usuario: ${SMTP_USUARIO:-}
-      Correo__Contrasena: ${SMTP_CONTRASENA:-}
+      # Correo real obligatorio: sin usuario o contraseña SMTP, compose no arranca.
+      Correo__Host: ${SMTP_HOST:-smtp.gmail.com}
+      Correo__Puerto: ${SMTP_PUERTO:-587}
+      Correo__Seguridad: ${SMTP_SEGURIDAD:-StartTls}
+      Correo__Usuario: ${SMTP_USUARIO:?Falta SMTP_USUARIO en .env (cuenta de correo real)}
+      Correo__Contrasena: ${SMTP_CONTRASENA:?Falta SMTP_CONTRASENA en .env (en Gmail, contraseña de aplicación)}
       Correo__Remitente: ${SMTP_REMITENTE:-}
       Egida__UrlPublica: ${EGIDA_URL_PUBLICA:-http://localhost:5173}
     networks: [red-app]
@@ -125,8 +119,6 @@ services:
       zap:
         condition: service_healthy
       egida-ia:
-        condition: service_started
-      mailpit:
         condition: service_started
     restart: unless-stopped
 
